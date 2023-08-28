@@ -9,7 +9,10 @@ package sha3
 // bytes.
 
 import (
+	"crypto"
 	"hash"
+
+	"golang.org/x/crypto/internal/backend"
 )
 
 // New224 creates a new SHA3-224 hash.
@@ -26,6 +29,14 @@ func New224() hash.Hash {
 // Its generic security strength is 256 bits against preimage attacks,
 // and 128 bits against collision attacks.
 func New256() hash.Hash {
+	if backend.Enabled {
+		if backend.SupportsHash(crypto.SHA3_256) {
+			println("using backend sha3_256")
+			return backend.NewSHA3_256()
+		} else {
+			println("backend doesn't support sha3_256")
+		}
+	}
 	if h := new256Asm(); h != nil {
 		return h
 	}
@@ -74,6 +85,14 @@ func Sum224(data []byte) (digest [28]byte) {
 
 // Sum256 returns the SHA3-256 digest of the data.
 func Sum256(data []byte) (digest [32]byte) {
+	if backend.Enabled {
+		if backend.SupportsHash(crypto.SHA3_256) {
+			println("using backend sha3_256")
+			return backend.SHA3_256(data)
+		} else {
+			println("backend doesn't support sha3_256")
+		}
+	}
 	h := New256()
 	h.Write(data)
 	h.Sum(digest[:0])
